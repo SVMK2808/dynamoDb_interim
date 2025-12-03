@@ -1,0 +1,36 @@
+syntax = "proto3";
+package dynamodb1;
+
+option go_package = "dynamodb1/proto;proto";
+
+service Dynamo {
+  rpc ReplicaPut(ReplicaPutReq) returns (ReplicaPutResp) {}
+  rpc ReplicaGet(ReplicaGetReq) returns (ReplicaGetResp) {}
+  rpc Ping(PingReq) returns (PingResp) {}
+  rpc StreamKeys(StreamKeysReq) returns (stream StreamKeysChunk) {}
+  rpc StreamMerkle(MerkleReq) returns (stream MerkleChunk) {}
+  rpc TransferItem(ItemTransferReq) returns (ItemTransferResp) {}
+}
+
+message VClockEntry { string node = 1; uint64 counter = 2; }
+message ContextProto { repeated VClockEntry entries = 1; bool tombstone = 2; string origin = 3; int64 ts = 4; }
+
+message ItemProto { string key = 1; bytes value = 2; ContextProto ctx = 3; }
+
+message ReplicaPutReq { ItemProto item = 1; }
+message ReplicaPutResp { repeated ItemProto stored = 1; string err = 2; }
+
+message ReplicaGetReq { string key = 1; }
+message ReplicaGetResp { repeated ItemProto items = 1; string err = 2; }
+
+message PingReq {}
+message PingResp { string node = 1; }
+
+message MerkleReq { string vnode = 1; }
+message MerkleChunk { string vnode = 1; bytes chunk = 2; }
+
+message ItemTransferReq { repeated ItemProto items = 1; }
+message ItemTransferResp { bool ok = 1; }
+
+message StreamKeysReq { string vnode = 1; }
+message StreamKeysChunk { repeated ItemProto items = 1; }

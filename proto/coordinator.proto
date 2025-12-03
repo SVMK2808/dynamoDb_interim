@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package dynamo;
+
+option go_package = "dynamodb1/proto";
+
+// Coordinator service for client-level reads/writes (quorum-managed).
+service Coordinator {
+  rpc Put(CoordinatorPutReq) returns (CoordinatorPutResp) {}
+  rpc Get(CoordinatorGetReq) returns (CoordinatorGetResp) {}
+}
+
+message CoordinatorPutReq {
+  string key = 1;
+  bytes value = 2;
+  ContextProto ctx = 3; // optional client context
+  uint32 W = 4;         // optional override for write quorum (0 -> use default)
+}
+
+message CoordinatorPutResp {
+  string Err = 1;
+  repeated ContextProto StoredContexts = 2;
+}
+
+message CoordinatorGetReq {
+  string key = 1;
+  uint32 R = 2; // optional override for read quorum (0 -> use default)
+}
+
+message CoordinatorGetResp {
+  string Err = 1;
+  repeated ItemProto Items = 2;
+}
+
+// Reuse / duplicate of your Item/Context proto definitions (ensure these match existing proto types)
+message ItemProto {
+  string Key = 1;
+  bytes Value = 2;
+  ContextProto Ctx = 3;
+}
+
+message ContextProto {
+  repeated VClockEntry Entries = 1;
+  bool Tombstone = 2;
+  string Origin = 3;
+  int64 Ts = 4;
+}
+
+message VClockEntry {
+  string Node = 1;
+  uint64 Counter = 2;
+}
